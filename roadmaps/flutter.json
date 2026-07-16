@@ -1,0 +1,17 @@
+{
+  "title": "Flutter",
+  "modules": [
+    "Intro to Dart Programming",
+    "Flutter SDK Setup",
+    "Widgets (Stateless vs Stateful)",
+    "Layouts (Row, Column, Stack)",
+    "Navigation & Routing",
+    "Form Validation",
+    "State Management (Provider/Bloc)",
+    "HTTP requests & JSON parsing",
+    "Local Persistence (SharedPreferences)",
+    "Animations & Micro-interactions",
+    "Integrating Native Code",
+    "App Store & Play Store deployment"
+  ]
+}

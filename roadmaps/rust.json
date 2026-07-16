@@ -1,0 +1,17 @@
+{
+  "title": "Rust",
+  "modules": [
+    "Getting Started with Cargo",
+    "Variables, Mutability & Types",
+    "Memory Management (Ownership & Borrowing)",
+    "Lifetimes Concept",
+    "Structs & Enums",
+    "Pattern Matching",
+    "Error Handling (Result & Option)",
+    "Generics & Traits",
+    "Concurrency Models",
+    "Smart Pointers (Box, Rc, Arc)",
+    "Writing Tests & Documentation",
+    "Performance Profiling"
+  ]
+}

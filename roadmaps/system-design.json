@@ -1,0 +1,17 @@
+{
+  "title": "System Design",
+  "modules": [
+    "Vertical vs Horizontal Scaling",
+    "Load Balancers",
+    "Caching Strategies (Redis/Memcached)",
+    "Database Sharding & Replication",
+    "Monoliths vs Microservices",
+    "Message Queues (Kafka/RabbitMQ)",
+    "Consistency (CAP Theorem)",
+    "CDNs (Content Delivery Networks)",
+    "Rate Limiters",
+    "Logging & Metrics",
+    "Designing a URL Shortener",
+    "Designing a Chat Application"
+  ]
+}

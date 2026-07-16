@@ -1,0 +1,17 @@
+{
+  "title": "Data Science",
+  "modules": [
+    "Data Science Lifecycle",
+    "Python for Data Analysis",
+    "Data Cleaning & Preprocessing",
+    "Exploratory Data Analysis (EDA)",
+    "Descriptive & Inferential Statistics",
+    "SQL for Data Retrievals",
+    "Data Visualization (Matplotlib/Seaborn)",
+    "Feature Engineering",
+    "Introduction to Machine Learning",
+    "Time Series Analysis",
+    "Big Data Basics (Spark)",
+    "Data Science Ethics"
+  ]
+}

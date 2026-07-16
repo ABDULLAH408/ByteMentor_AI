@@ -1,0 +1,17 @@
+{
+  "title": "C++",
+  "modules": [
+    "C++ Syntax & Structure",
+    "Control Flows & Loops",
+    "Functions & Overloading",
+    "Pointers & References",
+    "Memory Management (Stack vs Heap)",
+    "OOP (Classes, Inheritance, Polymorphism)",
+    "Templates & Generics",
+    "Standard Template Library (STL)",
+    "File Streams & I/O",
+    "Smart Pointers (C++11+)",
+    "Concurrency & Threads",
+    "Performance Tuning & Profiling"
+  ]
+}

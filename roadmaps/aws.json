@@ -1,0 +1,17 @@
+{
+  "title": "AWS Cloud",
+  "modules": [
+    "Cloud Computing Basics",
+    "AWS Global Infrastructure",
+    "IAM (Identity & Access Management)",
+    "EC2 (Virtual Servers)",
+    "VPC (Virtual Private Cloud)",
+    "S3 (Simple Storage Service)",
+    "RDS & DynamoDB (Databases)",
+    "Serverless (Lambda & API Gateway)",
+    "Route 53 & CloudFront",
+    "CloudWatch & CloudTrail",
+    "Auto Scaling & Load Balancing",
+    "AWS Certified Cloud Practitioner prep"
+  ]
+}

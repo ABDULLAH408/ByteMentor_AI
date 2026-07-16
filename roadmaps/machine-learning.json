@@ -1,0 +1,18 @@
+{
+  "title": "Machine Learning",
+  "modules": [
+    "Python Basics",
+    "NumPy",
+    "Pandas",
+    "Statistics",
+    "Linear Algebra",
+    "Data Visualization",
+    "Regression",
+    "Classification",
+    "Decision Trees",
+    "Random Forest",
+    "Neural Networks",
+    "Deep Learning",
+    "Model Deployment"
+  ]
+}

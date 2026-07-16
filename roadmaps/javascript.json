@@ -1,0 +1,17 @@
+{
+  "title": "JavaScript",
+  "modules": [
+    "Variables & Operators",
+    "Control Flow",
+    "Functions & Scope",
+    "Arrays & Objects",
+    "DOM Manipulation",
+    "Event Listeners",
+    "Asynchronous JS (Promises, Async/Await)",
+    "Fetch API & JSON",
+    "ES6+ Features",
+    "Error Handling",
+    "LocalStorage & SessionStorage",
+    "Modular JavaScript"
+  ]
+}

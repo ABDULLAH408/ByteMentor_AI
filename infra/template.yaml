@@ -1,0 +1,123 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: ByteMentor AI - Serverless backend for Always-On AI Coach (Challenge MVP)
+
+Globals:
+  Function:
+    Timeout: 90
+    MemorySize: 512
+    Environment:
+      Variables:
+        TABLE_NAME: !Ref LessonsTable
+        BEDROCK_REGION: !Ref BedrockRegion
+        SES_EMAIL_SENDER: !Ref SESEmailSender
+        SES_EMAIL_RECIPIENT: !Ref SESEmailRecipient
+
+Parameters:
+  BedrockRegion:
+    Type: String
+    Default: us-east-1
+    Description: The region where Bedrock Nova Lite is available (e.g. us-east-1 or us-west-2).
+  SESEmailSender:
+    Type: String
+    Default: ""
+    Description: Verified SES Email address to send lessons from (leave empty to disable email).
+  SESEmailRecipient:
+    Type: String
+    Default: ""
+    Description: Email address to send the daily lessons to (leave empty to disable email).
+
+Resources:
+  # DynamoDB Table
+  LessonsTable:
+    Type: AWS::Serverless::SimpleTable
+    Properties:
+      TableName: ByteMentorLessons
+      PrimaryKey:
+        Name: lessonDate
+        Type: String
+      ProvisionedThroughput:
+        ReadCapacityUnits: 1
+        WriteCapacityUnits: 1
+      SSESpecification:
+        SSEEnabled: true
+
+  # Lambda Function
+  ByteMentorFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: ByteMentorFunction
+      CodeUri: ../backend/
+      Handler: dist/index.handler
+      Runtime: nodejs18.x
+      FunctionUrlConfig:
+        AuthType: NONE
+        Cors:
+          AllowOrigins:
+            - '*'
+          AllowMethods:
+            - GET
+            - POST
+            - OPTIONS
+          AllowHeaders:
+            - content-type
+          MaxAge: 86400
+      Policies:
+        # DynamoDB Read/Write Policy
+        - DynamoDBCrudPolicy:
+            TableName: !Ref LessonsTable
+        # Bedrock Access Policy
+        - Statement:
+            - Effect: Allow
+              Action:
+                - bedrock:InvokeModel
+                - bedrock:InvokeModelWithResponseStream
+              Resource:
+                - arn:aws:bedrock:*::foundation-model/us.amazon.nova-lite-v1:0
+                - arn:aws:bedrock:*::foundation-model/amazon.nova-lite-v1:0
+        # Optional SES Access Policy
+        - Statement:
+            - Effect: Allow
+              Action:
+                - ses:SendEmail
+                - ses:SendRawEmail
+              Resource: '*'
+
+  # IAM Role for EventBridge Scheduler
+  SchedulerToLambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2010-09-09'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: scheduler.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: InvokeLambdaPolicy
+          PolicyDocument:
+            Version: '2010-09-09'
+            Statement:
+              - Effect: Allow
+                Action: lambda:InvokeFunction
+                Resource: !GetAtt ByteMentorFunction.Arn
+
+  # EventBridge Scheduler Schedule
+  DailyLessonSchedule:
+    Type: AWS::Scheduler::Schedule
+    Properties:
+      Name: ByteMentorDailySchedule
+      Description: Triggers ByteMentor daily lesson generation at 7:00 AM daily
+      ScheduleExpression: cron(0 7 * * ? *) # Runs at 07:00 UTC daily
+      FlexibleTimeWindow:
+        Mode: 'OFF'
+      Target:
+        Arn: !GetAtt ByteMentorFunction.Arn
+        RoleArn: !GetAtt SchedulerToLambdaRole.Arn
+        Input: '{"scheduled": true}'
+
+Outputs:
+  ByteMentorApiUrl:
+    Description: Public URL of the ByteMentor API to configure in the React frontend
+    Value: !GetAtt ByteMentorFunctionUrl.FunctionUrl

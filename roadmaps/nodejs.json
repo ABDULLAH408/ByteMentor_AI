@@ -1,0 +1,17 @@
+{
+  "title": "Node.js",
+  "modules": [
+    "Node.js Runtime Basics",
+    "Event Loop & Asynchronous Architecture",
+    "File System Module",
+    "HTTP Module",
+    "NPM & Package Management",
+    "Express.js Framework",
+    "Routing & Middleware",
+    "REST API Design",
+    "Authentication & JWT",
+    "Database Connection (Mongoose/Sequelize)",
+    "Error Handling Middlewares",
+    "Deployment & PM2"
+  ]
+}

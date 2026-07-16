@@ -1,0 +1,17 @@
+{
+  "title": "Go",
+  "modules": [
+    "Go Basics & Workspace",
+    "Variables, Types & Constants",
+    "Control Structures (For, Switch)",
+    "Slices, Arrays & Maps",
+    "Functions & Defer",
+    "Structs & Methods",
+    "Interfaces & Polymorphism",
+    "Pointers in Go",
+    "Concurrency (Goroutines & Channels)",
+    "Standard Library Modules (net/http, io)",
+    "Writing Unit Tests in Go",
+    "Building Web Servers & APIs"
+  ]
+}

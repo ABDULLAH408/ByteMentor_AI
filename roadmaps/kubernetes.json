@@ -1,0 +1,17 @@
+{
+  "title": "Kubernetes",
+  "modules": [
+    "Container Orchestration Basics",
+    "Kubernetes Architecture (Control Plane vs Nodes)",
+    "kubectl CLI tool",
+    "Pods Lifecycle",
+    "Deployments & ReplicaSets",
+    "Services (ClusterIP, NodePort, LoadBalancer)",
+    "ConfigMaps & Secrets",
+    "Persistent Volumes & Claims",
+    "Ingress Controllers",
+    "Namespaces & Resource Quotas",
+    "Helm Package Manager",
+    "Monitoring K8s Clusters"
+  ]
+}

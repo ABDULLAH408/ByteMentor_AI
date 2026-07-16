@@ -1,0 +1,17 @@
+{
+  "title": "Docker",
+  "modules": [
+    "Containerization Basics",
+    "Installing Docker",
+    "Docker Images & Containers",
+    "Dockerfile Creation",
+    "Docker Commands Reference",
+    "Docker Volumes (Data Persistence)",
+    "Docker Networking",
+    "Docker Compose (Multi-container apps)",
+    "Port Mapping & Environments",
+    "Image Optimization",
+    "Registry & Docker Hub",
+    "Docker Security Practices"
+  ]
+}

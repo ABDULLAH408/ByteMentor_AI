@@ -1,0 +1,17 @@
+{
+  "title": "DevOps",
+  "modules": [
+    "Introduction to DevOps",
+    "Linux Administration",
+    "Bash Scripting",
+    "Git & Version Control",
+    "CI/CD Pipelines (GitHub Actions/Jenkins)",
+    "Infrastructure as Code (Terraform)",
+    "Containerization (Docker)",
+    "Container Orchestration (Kubernetes)",
+    "Monitoring & Logging (Prometheus/Grafana)",
+    "Configuration Management (Ansible)",
+    "Cloud Provider Integration",
+    "Security in DevOps (DevSecOps)"
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "title": "Cyber Security",
+  "modules": [
+    "Networking Fundamentals",
+    "Linux",
+    "Operating Systems",
+    "TCP/IP",
+    "Cryptography",
+    "OWASP Top 10",
+    "Web Security",
+    "Burp Suite",
+    "Privilege Escalation",
+    "Active Directory",
+    "Penetration Testing"
+  ]
+}

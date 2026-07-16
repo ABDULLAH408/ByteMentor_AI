@@ -1,0 +1,17 @@
+{
+  "title": "Artificial Intelligence",
+  "modules": [
+    "History & Types of AI",
+    "Search Algorithms",
+    "Knowledge Representation",
+    "Machine Learning Foundations",
+    "Natural Language Processing (NLP)",
+    "Computer Vision Basics",
+    "Neural Networks Architecture",
+    "Generative AI & Large Language Models",
+    "Reinforcement Learning",
+    "AI Ethics & Bias",
+    "Robotics Foundations",
+    "AI Application Deployments"
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "title": "React",
+  "modules": [
+    "JavaScript Refresher",
+    "Components & JSX",
+    "Props & State",
+    "Event Handling",
+    "Hooks (useState, useEffect)",
+    "Custom Hooks",
+    "Context API",
+    "React Router",
+    "API Integration",
+    "Form Handling",
+    "State Management (Redux/Zustand)",
+    "Performance Optimization"
+  ]
+}

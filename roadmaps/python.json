@@ -1,0 +1,17 @@
+{
+  "title": "Python",
+  "modules": [
+    "Setup & Basic Syntax",
+    "Data Types & Variables",
+    "Control Flow (If, Loops)",
+    "Functions & Modules",
+    "Data Structures (Lists, Dicts)",
+    "File I/O",
+    "Object-Oriented Programming (OOP)",
+    "Error Handling",
+    "Virtual Environments",
+    "Standard Library",
+    "Database Integration",
+    "Basics of Web Scraping"
+  ]
+}
