@@ -1,0 +1,11 @@
+version = 0.1
+
+[default.deploy.parameters]
+stack_name = "bytementor-ai-backend"
+resolve_s3 = true
+s3_prefix = "bytementor-ai-backend"
+region = "us-east-1"
+confirm_changeset = false
+capabilities = "CAPABILITY_IAM"
+image_repositories = []
+parameter_overrides = "BedrockRegion=\"us-east-1\" SESEmailSender=\"\" SESEmailRecipient=\"\""
