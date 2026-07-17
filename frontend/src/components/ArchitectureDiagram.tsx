@@ -78,7 +78,7 @@ export const ArchitectureDiagram: React.FC = () => {
         {/* Arrow 2 */}
         <div className="hidden md:flex justify-center text-zinc-400 font-mono text-xl animate-pulse">→</div>
 
-        {/* Step 3: Bedrock Nova Lite */}
+        {/* Step 3: AI Model */}
         <motion.div 
           className="flex flex-col items-center text-center p-5 rounded-xl border border-zinc-200 bg-zinc-50 hover:border-zinc-300 transition-colors"
           variants={itemVariants}
@@ -88,8 +88,8 @@ export const ArchitectureDiagram: React.FC = () => {
               <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 21m0 0l-.813-5.096L3 15.187m6 5.813a2.001 2.001 0 003.524 0M14.187 15.904L15 21m0 0l.813-5.096L21 15.187M12 3v13.5m0-13.5L8.25 6.75M12 3l3.75 3.75" />
             </svg>
           </div>
-          <span className="text-xs text-purple-600 font-semibold px-2 py-0.5 bg-purple-50 rounded-full border border-purple-100">Amazon Bedrock</span>
-          <h4 className="text-sm font-semibold text-zinc-900 mt-3">Bedrock Nova Lite</h4>
+          <span className="text-xs text-purple-600 font-semibold px-2 py-0.5 bg-purple-50 rounded-full border border-purple-100">Groq API</span>
+          <h4 className="text-sm font-semibold text-zinc-900 mt-3">AI Model</h4>
           <p className="text-xs text-zinc-500 mt-2">Generates a formatted JSON tech lesson.</p>
         </motion.div>
       </motion.div>

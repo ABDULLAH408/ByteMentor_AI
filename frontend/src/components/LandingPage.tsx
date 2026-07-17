@@ -250,8 +250,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({ profile, onContinueJou
             <div className="flex flex-col md:flex-row items-center md:items-start gap-4">
               <div className="w-10 h-10 rounded-full bg-white border border-zinc-200 flex items-center justify-center text-brandPurple font-bold flex-shrink-0 shadow-sm">2</div>
               <div>
-                <h4 className="font-semibold text-zinc-900 text-sm mb-1.5">Bedrock Synthesizes</h4>
-                <p className="text-xs text-zinc-550 leading-relaxed">Nova Lite generates today's module lesson, formatting code, summaries, and 5 MCQs.</p>
+                <h4 className="font-semibold text-zinc-900 text-sm mb-1.5">AI Model Synthesizes</h4>
+                <p className="text-xs text-zinc-550 leading-relaxed">The AI Model generates today's module lesson, formatting code, summaries, and 5 MCQs.</p>
               </div>
             </div>
 
@@ -279,7 +279,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ profile, onContinueJou
             <span>&middot;</span>
             <span className="hover:text-zinc-700 cursor-pointer">Light Theme Only</span>
             <span>&middot;</span>
-            <span className="hover:text-zinc-700 cursor-pointer">Bedrock Powered</span>
+            <span className="hover:text-zinc-700 cursor-pointer">AI Model Powered</span>
           </div>
         </div>
       </footer>
