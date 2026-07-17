@@ -42,6 +42,27 @@ Resources:
       SSESpecification:
         SSEEnabled: true
 
+  # HTTP API Gateway (replaces Lambda Function URL)
+  ByteMentorHttpApi:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      StageName: '$default'
+      CorsConfiguration:
+        AllowOrigins:
+          - '*'
+        AllowMethods:
+          - GET
+          - POST
+          - DELETE
+          - PUT
+          - PATCH
+          - HEAD
+          - OPTIONS
+        AllowHeaders:
+          - content-type
+          - authorization
+        MaxAge: 86400
+
   # Lambda Function
   ByteMentorFunction:
     Type: AWS::Serverless::Function
@@ -49,19 +70,20 @@ Resources:
       FunctionName: ByteMentorFunction
       CodeUri: ../backend/
       Handler: dist/index.handler
-      Runtime: nodejs18.x
-      FunctionUrlConfig:
-        AuthType: NONE
-        Cors:
-          AllowOrigins:
-            - '*'
-          AllowMethods:
-            - GET
-            - POST
-            - OPTIONS
-          AllowHeaders:
-            - content-type
-          MaxAge: 86400
+      Runtime: nodejs22.x
+      Events:
+        ProxyEvent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref ByteMentorHttpApi
+            Method: ANY
+            Path: /{proxy+}
+        RootEvent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref ByteMentorHttpApi
+            Method: ANY
+            Path: /
       Policies:
         # DynamoDB Read/Write Policy
         - DynamoDBCrudPolicy:
@@ -88,7 +110,7 @@ Resources:
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
-        Version: '2010-09-09'
+        Version: '2012-10-17'
         Statement:
           - Effect: Allow
             Principal:
@@ -97,7 +119,7 @@ Resources:
       Policies:
         - PolicyName: InvokeLambdaPolicy
           PolicyDocument:
-            Version: '2010-09-09'
+            Version: '2012-10-17'
             Statement:
               - Effect: Allow
                 Action: lambda:InvokeFunction
@@ -109,7 +131,7 @@ Resources:
     Properties:
       Name: ByteMentorDailySchedule
       Description: Triggers ByteMentor daily lesson generation at 7:00 AM daily
-      ScheduleExpression: cron(0 7 * * ? *) # Runs at 07:00 UTC daily
+      ScheduleExpression: 'cron(0 7 * * ? *)'
       FlexibleTimeWindow:
         Mode: 'OFF'
       Target:
@@ -118,6 +140,6 @@ Resources:
         Input: '{"scheduled": true}'
 
 Outputs:
-  ByteMentorApiUrl:
-    Description: Public URL of the ByteMentor API to configure in the React frontend
-    Value: !GetAtt ByteMentorFunctionUrl.FunctionUrl
+  HttpApiUrl:
+    Description: HTTP API endpoint URL to configure in the React frontend
+    Value: !Sub 'https://${ByteMentorHttpApi}.execute-api.${AWS::Region}.amazonaws.com'
