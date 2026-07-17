@@ -1,7 +1,7 @@
 // Set up default environment variables for local testing before imports execute
 process.env.AWS_REGION = process.env.AWS_REGION || "us-east-1";
 process.env.TABLE_NAME = process.env.TABLE_NAME || "ByteMentorLessons";
-process.env.BEDROCK_REGION = process.env.BEDROCK_REGION || "us-east-1";
+process.env.GEMINI_API_KEY = process.env.GEMINI_API_KEY || "";
 
 import { handler } from "./index";
 

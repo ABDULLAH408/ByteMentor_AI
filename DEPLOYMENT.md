@@ -8,7 +8,7 @@ This guide details the step-by-step instructions for deploying the **ByteMentor 
 The application runs entirely on standard AWS serverless services, fitting fully within the **AWS Free Tier**:
 * **AWS Lambda**: Hosts the backend logic and Function URL endpoint.
 * **Amazon DynamoDB**: Stores the student profile roadmaps and daily lessons.
-* **Amazon Bedrock (Nova Lite)**: Generates domain-specific daily learning lessons.
+* **Google Gemini 2.5 Flash**: Generates domain-specific daily learning lessons.
 * **Amazon EventBridge Scheduler**: Triggers the daily lesson generator at a set cron time.
 * **AWS Systems Manager (SSM) / IAM**: Configures access rules and stack security parameters.
 * **AWS Amplify (Hosting)**: Builds and hosts the React frontend directly from GitHub.
@@ -60,7 +60,7 @@ You can use the deployment helper scripts in `infra/` or run the commands manual
 Follow the interactive prompts:
 1. **Stack Name**: `bytementor-ai-backend`
 2. **AWS Region**: `us-east-1` (recommended region supporting Nova Lite model)
-3. **Parameter BedrockRegion**: `us-east-1`
+3. **Parameter GeminiApiKey**: Paste your Google Gemini API key when prompted.
 4. **Parameter SESEmailSender**: Enter a verified SES email (leave empty to disable email)
 5. **Parameter SESEmailRecipient**: Enter your email (leave empty to disable email)
 6. Accept defaults for confirmation and IAM role creation.
@@ -70,12 +70,11 @@ Save the output URL: **`ByteMentorApiUrl`** (e.g. `https://xxxxxxxxxxxxxx.lambda
 
 ---
 
-## 4. How to Configure Bedrock
-1. Log in to the [AWS Console](https://console.aws.amazon.com/).
-2. Navigate to **Amazon Bedrock**.
-3. Under **Model access** in the left sidebar, click **Manage model access**.
-4. Request access to **Amazon Nova Lite** (under the Amazon models section).
-5. Ensure access is **Granted** before launching the app.
+## 4. How to Configure Gemini
+1. Create or sign in to a Google AI Studio account at [aistudio.google.com](https://aistudio.google.com/).
+2. Open **API Keys** and create a new API key.
+3. During `sam deploy --guided`, paste that key when SAM prompts for **GeminiApiKey**.
+4. The Lambda will receive it automatically as the `GEMINI_API_KEY` environment variable.
 
 ---
 
@@ -107,8 +106,7 @@ git push origin main
 Check the `.env.example` file in the root workspace directory:
 ```env
 TABLE_NAME=ByteMentorLessons
-BEDROCK_REGION=us-east-1
-BEDROCK_MODEL_ID=us.amazon.nova-lite-v1:0
+GEMINI_API_KEY=
 SES_EMAIL_SENDER=
 SES_EMAIL_RECIPIENT=
 VITE_API_URL=https://your-lambda-function-url.lambda-url.us-east-1.on.aws/
@@ -117,9 +115,9 @@ VITE_API_URL=https://your-lambda-function-url.lambda-url.us-east-1.on.aws/
 ---
 
 ## 7. Common Deployment Issues & Troubleshooting
-* **Error: `ModelNotAssociatedException`**:
-  * **Cause**: Model access to Amazon Nova Lite is not enabled in Bedrock.
-  * **Fix**: Navigate to Bedrock Console -> Model Access -> Request access to Nova Lite.
+* **Error: `API key not valid`**:
+  * **Cause**: The Gemini API key is missing, expired, or invalid.
+  * **Fix**: Recreate the key in Google AI Studio and re-run `sam deploy --guided` with the new value.
 * **CORS Blocked Errors**:
   * **Cause**: Backend function URL or API Gateway is not configured to accept requests from the frontend domain.
   * **Fix**: Ensure CORS settings in `template.yaml` (lines 55-64) permit `*` or your Amplify domain.
@@ -132,6 +130,6 @@ VITE_API_URL=https://your-lambda-function-url.lambda-url.us-east-1.on.aws/
 ## 8. Verification Checklist
 - [ ] Backend bundles successfully via `esbuild`.
 - [ ] Frontend builds successfully via `vite build`.
-- [ ] Bedrock Nova Lite has granted status in target region.
+- [ ] Gemini API key is available and has been supplied during deployment.
 - [ ] SAM backend stack deployed successfully.
 - [ ] Amplify app status is green and environment variable `VITE_API_URL` is set.

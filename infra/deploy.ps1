@@ -31,7 +31,7 @@ Write-Host "AWS SAM CLI detected." -ForegroundColor Green
 # 3. Deploy via SAM CLI
 Write-Host "`n[3/3] Deploying stack via AWS SAM CLI..." -ForegroundColor Yellow
 Write-Host "This will create the DynamoDB table, Lambda Function (with public URL), and EventBridge Scheduler rule." -ForegroundColor Gray
-Write-Host "Please follow the interactive prompts for S3 bucket creation and region selections (use us-east-1 or us-west-2 for Bedrock Nova Lite)." -ForegroundColor Gray
+Write-Host "Please follow the interactive prompts for S3 bucket creation and region selections." -ForegroundColor Gray
 Write-Host "Press enter when ready to launch 'sam deploy --guided'..." -ForegroundColor DarkGray
 Read-Host
 

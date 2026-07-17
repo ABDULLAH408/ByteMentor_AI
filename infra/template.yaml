@@ -9,15 +9,15 @@ Globals:
     Environment:
       Variables:
         TABLE_NAME: !Ref LessonsTable
-        BEDROCK_REGION: !Ref BedrockRegion
+        GEMINI_API_KEY: !Ref GeminiApiKey
         SES_EMAIL_SENDER: !Ref SESEmailSender
         SES_EMAIL_RECIPIENT: !Ref SESEmailRecipient
 
 Parameters:
-  BedrockRegion:
+  GeminiApiKey:
     Type: String
-    Default: us-east-1
-    Description: The region where Bedrock Nova Lite is available (e.g. us-east-1 or us-west-2).
+    NoEcho: true
+    Description: Google Gemini API key for Gemini 2.5 Flash.
   SESEmailSender:
     Type: String
     Default: ""
@@ -88,15 +88,7 @@ Resources:
         # DynamoDB Read/Write Policy
         - DynamoDBCrudPolicy:
             TableName: !Ref LessonsTable
-        # Bedrock Access Policy
-        - Statement:
-            - Effect: Allow
-              Action:
-                - bedrock:InvokeModel
-                - bedrock:InvokeModelWithResponseStream
-              Resource:
-                - arn:aws:bedrock:*::foundation-model/us.amazon.nova-lite-v1:0
-                - arn:aws:bedrock:*::foundation-model/amazon.nova-lite-v1:0
+
         # Optional SES Access Policy
         - Statement:
             - Effect: Allow

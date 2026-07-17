@@ -7,7 +7,7 @@ s3_prefix = "ByteMentor"
 confirm_changeset = true
 capabilities = "CAPABILITY_IAM"
 image_repositories = []
-parameter_overrides = "BedrockRegion=\"us-east-1\" SESEmailSender=\"ab408408@gmail.com\" SESEmailRecipient=\"ab408408@gmail.com\""
+parameter_overrides = "SESEmailSender=\"ab408408@gmail.com\" SESEmailRecipient=\"ab408408@gmail.com\""
 disable_rollback = true
 
 [default.global.parameters]

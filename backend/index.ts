@@ -1,16 +1,16 @@
-import { BedrockRuntimeClient, ConverseCommand } from "@aws-sdk/client-bedrock-runtime";
+import { GoogleGenAI } from "@google/genai";
 import { DynamoDBClient, PutItemCommand, GetItemCommand, ScanCommand, UpdateItemCommand } from "@aws-sdk/client-dynamodb";
 import { marshall, unmarshall } from "@aws-sdk/util-dynamodb";
 import { SESClient, SendEmailCommand } from "@aws-sdk/client-ses";
 
 // Initialize AWS Clients
-const bedrockRegion = process.env.BEDROCK_REGION || "us-east-1";
-const bedrockClient = new BedrockRuntimeClient({ region: bedrockRegion });
 const ddbClient = new DynamoDBClient({});
 const sesClient = new SESClient({});
 
 const TABLE_NAME = process.env.TABLE_NAME || "ByteMentorLessons";
-const MODEL_ID = "us.amazon.nova-lite-v1:0";
+const GEMINI_MODEL = "gemini-2.5-flash";
+const geminiApiKey = process.env.GEMINI_API_KEY;
+const geminiClient = geminiApiKey ? new GoogleGenAI({ apiKey: geminiApiKey }) : null;
 
 const PREDEFINED_ROADMAPS: Record<string, { title: string; modules: string[] }> = {
   "machine-learning": {
@@ -404,8 +404,31 @@ interface Profile {
   updatedAt: string;
 }
 
+async function generateWithGemini(systemPrompt: string, userPrompt: string, maxTokens: number, temperature: number): Promise<string> {
+  if (!geminiClient) {
+    throw new Error("GEMINI_API_KEY is not configured.");
+  }
+
+  const response = await geminiClient.models.generateContent({
+    model: GEMINI_MODEL,
+    contents: [{ role: "user", parts: [{ text: userPrompt }] }],
+    config: {
+      systemInstruction: systemPrompt,
+      maxOutputTokens: maxTokens,
+      temperature,
+    }
+  });
+
+  const responseText = response.text?.trim() || "";
+  if (!responseText) {
+    throw new Error("No response content from Gemini");
+  }
+
+  return responseText;
+}
+
 /**
- * Generates a personalized learning roadmap using Bedrock.
+ * Generates a personalized learning roadmap using Gemini.
  */
 async function generateRoadmap(topic: string, difficulty: string, goal: string, studyTime: string): Promise<Array<{ title: string }>> {
   console.log(`[DEBUG] generateRoadmap - Selected Topic: "${topic}"`);
@@ -415,7 +438,7 @@ Output ONLY a valid JSON object matching the schema below. Do not wrap the JSON 
 
 Guidelines:
 - The roadmap modules MUST be strictly relevant to learning the topic: "${topic}".
-- NEVER include modules or references about AWS, Amazon Bedrock, or cloud infrastructure unless the topic is explicitly "AWS Cloud" or "DevOps".
+- NEVER include modules or references about AWS or cloud infrastructure unless the topic is explicitly "AWS Cloud" or "DevOps".
 - Follow a logical progression from beginner foundations to advanced applications.
 
 JSON Schema:
@@ -433,37 +456,13 @@ Their goal is: "${goal}".
 They can study: "${studyTime}" per day.
 Ensure the modules follow a clear, logical progression from foundational concepts to advanced topics suited for their experience level and goal.`;
 
-  console.log(`[DEBUG] generateRoadmap - Prompt sent to Bedrock: "${userPrompt}"`);
+  console.log(`[DEBUG] generateRoadmap - Prompt sent to Gemini: "${userPrompt}"`);
 
   try {
-    const command = new ConverseCommand({
-      modelId: MODEL_ID,
-      messages: [
-        {
-          role: "user",
-          content: [{ text: userPrompt }]
-        }
-      ],
-      system: [
-        {
-          text: systemPrompt
-        }
-      ],
-      inferenceConfig: {
-        maxTokens: 2000,
-        temperature: 0.7,
-      }
-    });
-
-    const response = await bedrockClient.send(command);
-    const responseText = response.output?.message?.content?.[0]?.text;
-
-    if (!responseText) {
-      throw new Error("No response content from Bedrock");
-    }
+    const responseText = await generateWithGemini(systemPrompt, userPrompt, 2000, 0.7);
 
     let cleanJsonText = responseText.trim();
-    console.log(`[DEBUG] generateRoadmap - Response from Bedrock: "${cleanJsonText}"`);
+    console.log(`[DEBUG] generateRoadmap - Response from Gemini: "${cleanJsonText}"`);
     if (cleanJsonText.startsWith("```")) {
       cleanJsonText = cleanJsonText.replace(/^```(json)?/, "").replace(/```$/, "").trim();
     }
@@ -535,37 +534,13 @@ JSON Schema:
 }`;
 
   const userPrompt = `Generate today's micro-learning lesson for the date ${date}. Focus exclusively on "${moduleTitle}" in the context of learning "${profile.topic}".`;
-  console.log(`[DEBUG] generateLessonForModule - Prompt sent to Bedrock: "${userPrompt}"`);
+  console.log(`[DEBUG] generateLessonForModule - Prompt sent to Gemini: "${userPrompt}"`);
 
   try {
-    const command = new ConverseCommand({
-      modelId: MODEL_ID,
-      messages: [
-        {
-          role: "user",
-          content: [{ text: userPrompt }]
-        }
-      ],
-      system: [
-        {
-          text: systemPrompt
-        }
-      ],
-      inferenceConfig: {
-        maxTokens: 3000,
-        temperature: 0.7,
-      }
-    });
-
-    const response = await bedrockClient.send(command);
-    const responseText = response.output?.message?.content?.[0]?.text;
-
-    if (!responseText) {
-      throw new Error("No response content from Bedrock");
-    }
+    const responseText = await generateWithGemini(systemPrompt, userPrompt, 3000, 0.7);
 
     let cleanJsonText = responseText.trim();
-    console.log(`[DEBUG] generateLessonForModule - Response from Bedrock: "${cleanJsonText}"`);
+    console.log(`[DEBUG] generateLessonForModule - Response from Gemini: "${cleanJsonText}"`);
     if (cleanJsonText.startsWith("```")) {
       cleanJsonText = cleanJsonText.replace(/^```(json)?/, "").replace(/```$/, "").trim();
     }
@@ -600,7 +575,7 @@ JSON Schema:
 }
 
 /**
- * Generates a legacy new lesson for a given date (fallback only) using Bedrock Nova Lite.
+ * Generates a legacy new lesson for a given date (fallback only) using Gemini.
  */
 async function generateLesson(date: string): Promise<Lesson> {
   const systemPrompt = `You are ByteMentor AI, an elite autonomous Learning Coach.
@@ -609,7 +584,7 @@ You must output ONLY a valid JSON object matching the schema below. Do not wrap 
 
 Guidelines:
 - Select general software development topics.
-- NEVER generate content or reference AWS or Bedrock cloud deployment in this fallback mode.
+- NEVER generate content or reference AWS or cloud deployment in this fallback mode.
 
 JSON Schema:
 {
@@ -639,33 +614,9 @@ Select a relevant topic in software engineering (React patterns, Git workflows, 
 Make sure the lesson is highly engaging, clean, and contains a practical, fully formed code example.`;
 
   try {
-    const command = new ConverseCommand({
-      modelId: MODEL_ID,
-      messages: [
-        {
-          role: "user",
-          content: [{ text: userPrompt }]
-        }
-      ],
-      system: [
-        {
-          text: systemPrompt
-        }
-      ],
-      inferenceConfig: {
-        maxTokens: 3000,
-        temperature: 0.7,
-      }
-    });
+    const responseText = await generateWithGemini(systemPrompt, userPrompt, 3000, 0.7);
 
-    const response = await bedrockClient.send(command);
-    const responseText = response.output?.message?.content?.[0]?.text;
-
-    if (!responseText) {
-      throw new Error("No response content from Bedrock");
-    }
-
-    // Clean up responseText if Bedrock wraps it in markdown code blocks
+    // Clean up responseText if Gemini wraps it in markdown code blocks
     let cleanJsonText = responseText.trim();
     if (cleanJsonText.startsWith("```")) {
       // Strip ```json or ``` if present
@@ -695,7 +646,7 @@ Make sure the lesson is highly engaging, clean, and contains a practical, fully 
 
     return lesson;
   } catch (error) {
-    console.error("Bedrock generation failed:", error);
+    console.error("Gemini generation failed:", error);
     throw error;
   }
 }
@@ -796,7 +747,7 @@ export const handler = async (event: any): Promise<any> => {
     console.log(`Scheduler triggered. Generating daily lesson for UTC date: ${todayStr}`);
 
     try {
-      // Check if lesson already generated to avoid duplicate Bedrock costs
+      // Check if lesson already generated to avoid duplicate generation costs
       const getCommand = new GetItemCommand({
         TableName: TABLE_NAME,
         Key: marshall({ lessonDate: todayStr })
@@ -910,8 +861,8 @@ export const handler = async (event: any): Promise<any> => {
         console.log(`[DEBUG] Found predefined template for "${topic}": key "${templateKey}"`);
         modules = PREDEFINED_ROADMAPS[templateKey].modules;
       } else {
-        console.log(`[DEBUG] No predefined template for "${topic}". Invoking Bedrock for custom roadmap.`);
-        // Generate roadmap modules using Bedrock
+        console.log(`[DEBUG] No predefined template for "${topic}". Invoking Gemini for custom roadmap.`);
+        // Generate roadmap modules using Gemini
         const roadmapModules = await generateRoadmap(topic, difficulty, goal, studyTime);
         modules = roadmapModules.map((m: any) => m.title);
       }
