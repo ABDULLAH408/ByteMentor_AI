@@ -2,7 +2,7 @@
 
 ByteMentor AI is an autonomous, always-on AI learning coach designed for the AWS Builder Center "Build an Always-On Agent Weekend Challenge." 
 
-Instead of waiting for you to ask "What should I learn today?", the application automatically pre-generates a personalized software engineering micro-lesson every morning at 7:00 AM using AWS Lambda and Amazon Bedrock Nova Lite, storing it in DynamoDB so it is ready the moment you open the app.
+Instead of waiting for you to ask "What should I learn today?", the application automatically pre-generates a personalized software engineering micro-lesson every morning at 7:00 AM using AWS Lambda and Groq API (Llama 3.3 70B), storing it in DynamoDB so it is ready the moment you open the app.
 
 ---
 
@@ -11,7 +11,7 @@ Instead of waiting for you to ask "What should I learn today?", the application 
 ```
 EventBridge Scheduler (Daily 7 AM)
        ↓
-  AWS Lambda (Node.js) ──[Queries/Invokes]──> Amazon Bedrock Nova Lite
+  AWS Lambda (Node.js) ──[Queries/Invokes]──> Groq API (Llama 3.3 70B)
        │
        ├─[Stores Lesson JSON]─> Amazon DynamoDB (Single Table: ByteMentorLessons)
        ├─[Sends Email]────────> Amazon SES (Optional)
@@ -19,7 +19,7 @@ EventBridge Scheduler (Daily 7 AM)
 ```
 
 1. **Automation**: Amazon EventBridge Scheduler triggers our Lambda function daily at 7:00 AM UTC.
-2. **AI Synthesis**: The Lambda queries Bedrock Nova Lite (`us.amazon.nova-lite-v1:0`) using the Converse API to synthesize a strictly structured JSON micro-lesson.
+2. **AI Synthesis**: The Lambda queries the Groq API (Llama 3.3 70B by default) to synthesize a strictly structured JSON micro-lesson.
 3. **Persistance**: The lesson is written into Amazon DynamoDB with the partition key `lessonDate` (e.g. `2026-07-17`).
 4. **Notification**: If configured, AWS SES emails the lesson summary to the user.
 5. **Consumption**: A high-end dark-themed React + Vite website displays today's lesson, tracks code syntax, hosts interactive quizzes, and allows marking lessons as completed.
@@ -59,7 +59,7 @@ EventBridge Scheduler (Daily 7 AM)
 - **Node.js** (v18 or higher) and **npm**
 - An **AWS Account** with access key credentials set up locally (`aws configure`)
 - **AWS SAM CLI** (recommended for infrastructure deployment)
-- **Amazon Bedrock Nova Lite** access enabled in your AWS console (typically in `us-east-1` or `us-west-2` regions)
+- A **Groq API Key** (obtainable from the Groq Console)
 
 ---
 
@@ -122,10 +122,9 @@ If you prefer to set up resources manually using the AWS Console:
   - Configure CORS: Set `Allow Origin` to `*` (or your frontend domain) and allow methods `GET, POST, OPTIONS`.
 - In **Configuration -> Environment Variables**, add:
   - `TABLE_NAME` = `ByteMentorLessons`
-  - `BEDROCK_REGION` = `us-east-1` (or your chosen region)
+  - `GROQ_API_KEY` = `your_groq_api_key`
 - In **Configuration -> Permissions**, click the role link to go to IAM, and attach policies to allow:
   - `dynamodb:GetItem`, `dynamodb:PutItem`, `dynamodb:UpdateItem`, `dynamodb:Scan` on the `ByteMentorLessons` table.
-  - `bedrock:InvokeModel` on `arn:aws:bedrock:*::foundation-model/us.amazon.nova-lite-v1:0`.
   - (Optional) `ses:SendEmail` on `*` if using SES.
 
 #### 3. Upload the Code
@@ -180,8 +179,8 @@ To receive today's lesson directly in your inbox:
 
 ---
 
-## 🚀 Bedrock Output Format Reference
-The Bedrock integration requests and parses responses conforming strictly to this format:
+## 🚀 Groq Output Format Reference
+The Groq integration requests and parses responses conforming strictly to this format:
 ```json
 {
   "topic": "Understanding CSS Grid",

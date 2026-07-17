@@ -8,7 +8,7 @@ This guide details the step-by-step instructions for deploying the **ByteMentor 
 The application runs entirely on standard AWS serverless services, fitting fully within the **AWS Free Tier**:
 * **AWS Lambda**: Hosts the backend logic and Function URL endpoint.
 * **Amazon DynamoDB**: Stores the student profile roadmaps and daily lessons.
-* **Google Gemini 2.5 Flash**: Generates domain-specific daily learning lessons.
+* **Groq API (Llama 3.3 70B)**: Generates domain-specific daily learning lessons.
 * **Amazon EventBridge Scheduler**: Triggers the daily lesson generator at a set cron time.
 * **AWS Systems Manager (SSM) / IAM**: Configures access rules and stack security parameters.
 * **AWS Amplify (Hosting)**: Builds and hosts the React frontend directly from GitHub.
@@ -59,7 +59,7 @@ You can use the deployment helper scripts in `infra/` or run the commands manual
 
 Follow the interactive prompts:
 1. **Stack Name**: `bytementor-ai-backend`
-2. **AWS Region**: `us-east-1` (recommended region supporting Nova Lite model)
+2. **AWS Region**: `us-east-1` (or your preferred region)
 3. **Parameter SESEmailSender**: Enter a verified SES email (leave empty to disable email)
 4. **Parameter SESEmailRecipient**: Enter your email (leave empty to disable email)
 5. Accept defaults for confirmation and IAM role creation.
@@ -69,10 +69,10 @@ Save the output URL: **`ByteMentorApiUrl`** (e.g. `https://xxxxxxxxxxxxxx.lambda
 
 ---
 
-## 4. How to Configure Gemini
-1. Create or sign in to a Google AI Studio account at [aistudio.google.com](https://aistudio.google.com/).
-2. Open **API Keys** and create a new API key.
-4. After deployment, add that key to the Lambda function's environment as `GEMINI_API_KEY` in the AWS Console or via the AWS CLI.
+## 4. How to Configure Groq
+1. Create or sign in to a Groq Console account at [console.groq.com](https://console.groq.com/).
+2. Navigate to **API Keys** and click **Create API Key**.
+3. After deployment, add that key to the Lambda function's environment as `GROQ_API_KEY` in the AWS Console, or supply it as the `GroqApiKey` parameter during CloudFormation deployment.
 
 ---
 
@@ -104,7 +104,7 @@ git push origin main
 Check the `.env.example` file in the root workspace directory:
 ```env
 TABLE_NAME=ByteMentorLessons
-GEMINI_API_KEY=
+GROQ_API_KEY=
 SES_EMAIL_SENDER=
 SES_EMAIL_RECIPIENT=
 VITE_API_URL=https://your-lambda-function-url.lambda-url.us-east-1.on.aws/
@@ -114,8 +114,8 @@ VITE_API_URL=https://your-lambda-function-url.lambda-url.us-east-1.on.aws/
 
 ## 7. Common Deployment Issues & Troubleshooting
 * **Error: `API key not valid`**:
-  * **Cause**: The Gemini API key is missing, expired, or invalid.
-  * **Fix**: Recreate the key in Google AI Studio and re-run `sam deploy --guided` with the new value.
+  * **Cause**: The Groq API key is missing, expired, or invalid.
+  * **Fix**: Recreate the key in the Groq Console and re-run `sam deploy --guided` with the new value, or configure it directly in the Lambda environment variables.
 * **CORS Blocked Errors**:
   * **Cause**: Backend function URL or API Gateway is not configured to accept requests from the frontend domain.
   * **Fix**: Ensure CORS settings in `template.yaml` (lines 55-64) permit `*` or your Amplify domain.
@@ -128,6 +128,6 @@ VITE_API_URL=https://your-lambda-function-url.lambda-url.us-east-1.on.aws/
 ## 8. Verification Checklist
 - [ ] Backend bundles successfully via `esbuild`.
 - [ ] Frontend builds successfully via `vite build`.
-- [ ] Gemini API key is available and has been supplied during deployment.
+- [ ] Groq API key is available and has been supplied during deployment.
 - [ ] SAM backend stack deployed successfully.
 - [ ] Amplify app status is green and environment variable `VITE_API_URL` is set.

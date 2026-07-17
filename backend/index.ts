@@ -1,4 +1,4 @@
-import { GoogleGenAI } from "@google/genai";
+import Groq from "groq-sdk";
 import { DynamoDBClient, PutItemCommand, GetItemCommand, ScanCommand, UpdateItemCommand } from "@aws-sdk/client-dynamodb";
 import { marshall, unmarshall } from "@aws-sdk/util-dynamodb";
 import { SESClient, SendEmailCommand } from "@aws-sdk/client-ses";
@@ -8,9 +8,31 @@ const ddbClient = new DynamoDBClient({});
 const sesClient = new SESClient({});
 
 const TABLE_NAME = process.env.TABLE_NAME || "ByteMentorLessons";
-const GEMINI_MODEL = "gemini-2.5-flash";
-const geminiApiKey = process.env.GEMINI_API_KEY;
-const geminiClient = geminiApiKey ? new GoogleGenAI({ apiKey: geminiApiKey }) : null;
+const DEFAULT_GROQ_MODEL = "llama-3.3-70b-versatile";
+const FALLBACK_GROQ_MODELS = [
+  "openai/gpt-oss-120b",
+  "llama-3.1-70b-versatile",
+  "llama-3.1-8b-instant"
+];
+let groqClient: Groq | null = null;
+
+function getGroqClient(): Groq {
+  console.log("Groq key exists:", !!process.env.GROQ_API_KEY);
+
+  const apiKey = process.env.GROQ_API_KEY?.trim();
+
+  if (!apiKey) {
+    throw new Error("GROQ_API_KEY is not configured.");
+  }
+
+  if (!groqClient) {
+    groqClient = new Groq({
+      apiKey
+    });
+  }
+
+  return groqClient;
+}
 
 const PREDEFINED_ROADMAPS: Record<string, { title: string; modules: string[] }> = {
   "machine-learning": {
@@ -404,27 +426,78 @@ interface Profile {
   updatedAt: string;
 }
 
-async function generateWithGemini(systemPrompt: string, userPrompt: string, maxTokens: number, temperature: number): Promise<string> {
-  if (!geminiClient) {
-    throw new Error("GEMINI_API_KEY is not configured.");
+function isTransientError(error: any): boolean {
+  const status = error?.status || error?.statusCode || error?.response?.status;
+  if (typeof status === "number") {
+    return status === 429 || (status >= 500 && status < 600);
   }
+  const message = (error?.message || String(error)).toLowerCase();
+  const code = (error?.code || "").toLowerCase();
+  return (
+    message.includes("429") ||
+    message.includes("500") ||
+    message.includes("502") ||
+    message.includes("503") ||
+    message.includes("504") ||
+    message.includes("rate limit") ||
+    message.includes("timeout") ||
+    message.includes("overloaded") ||
+    code === "etimedout" ||
+    code === "econnaborted" ||
+    code === "econnrefused"
+  );
+}
 
-  const response = await geminiClient.models.generateContent({
-    model: GEMINI_MODEL,
-    contents: [{ role: "user", parts: [{ text: userPrompt }] }],
-    config: {
-      systemInstruction: systemPrompt,
-      maxOutputTokens: maxTokens,
-      temperature,
+async function generateWithGroq(systemPrompt: string, userPrompt: string, maxTokens: number, temperature: number): Promise<string> {
+  const ai = getGroqClient();
+  const failures: string[] = [];
+  const models = [DEFAULT_GROQ_MODEL, ...FALLBACK_GROQ_MODELS];
+
+  for (const model of models) {
+    let attempts = 0;
+    const maxAttempts = 2; // Initial try + 1 retry on transient error
+
+    while (attempts < maxAttempts) {
+      attempts++;
+      try {
+        console.log(`[DEBUG] Attempting generation with model: ${model} (attempt ${attempts}/${maxAttempts})`);
+        const response = await ai.chat.completions.create({
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: userPrompt }
+          ],
+          model,
+          max_tokens: maxTokens,
+          temperature,
+          response_format: { type: "json_object" }
+        });
+
+        const responseText = response.choices?.[0]?.message?.content?.trim() || "";
+        if (!responseText) {
+          throw new Error(`Empty response content from model ${model}`);
+        }
+
+        return responseText;
+      } catch (error: any) {
+        const isTransient = isTransientError(error);
+        const errMsg = error?.message || String(error);
+        console.error(`[ERROR] Model ${model} failed on attempt ${attempts}:`, error);
+
+        if (isTransient && attempts < maxAttempts) {
+          console.warn(`[WARNING] Transient error detected for model ${model}. Retrying once...`);
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+          continue;
+        }
+
+        console.error(`[CLOUD_WATCH_LOG] Provider error with model ${model}: ${errMsg}`);
+        failures.push(`${model}: ${errMsg}`);
+        break; // Break inner loop to move to the next model
+      }
     }
-  });
-
-  const responseText = response.text?.trim() || "";
-  if (!responseText) {
-    throw new Error("No response content from Gemini");
   }
 
-  return responseText;
+  // Never expose internal errors to the frontend
+  throw new Error("Failed to generate content. Please try again later.");
 }
 
 /**
@@ -456,13 +529,13 @@ Their goal is: "${goal}".
 They can study: "${studyTime}" per day.
 Ensure the modules follow a clear, logical progression from foundational concepts to advanced topics suited for their experience level and goal.`;
 
-  console.log(`[DEBUG] generateRoadmap - Prompt sent to Gemini: "${userPrompt}"`);
+  console.log(`[DEBUG] generateRoadmap - Prompt sent to Groq: "${userPrompt}"`);
 
   try {
-    const responseText = await generateWithGemini(systemPrompt, userPrompt, 2000, 0.7);
+    const responseText = await generateWithGroq(systemPrompt, userPrompt, 2000, 0.7);
 
     let cleanJsonText = responseText.trim();
-    console.log(`[DEBUG] generateRoadmap - Response from Gemini: "${cleanJsonText}"`);
+    console.log(`[DEBUG] generateRoadmap - Response from Groq: "${cleanJsonText}"`);
     if (cleanJsonText.startsWith("```")) {
       cleanJsonText = cleanJsonText.replace(/^```(json)?/, "").replace(/```$/, "").trim();
     }
@@ -534,13 +607,13 @@ JSON Schema:
 }`;
 
   const userPrompt = `Generate today's micro-learning lesson for the date ${date}. Focus exclusively on "${moduleTitle}" in the context of learning "${profile.topic}".`;
-  console.log(`[DEBUG] generateLessonForModule - Prompt sent to Gemini: "${userPrompt}"`);
+  console.log(`[DEBUG] generateLessonForModule - Prompt sent to Groq: "${userPrompt}"`);
 
   try {
-    const responseText = await generateWithGemini(systemPrompt, userPrompt, 3000, 0.7);
+    const responseText = await generateWithGroq(systemPrompt, userPrompt, 3000, 0.7);
 
     let cleanJsonText = responseText.trim();
-    console.log(`[DEBUG] generateLessonForModule - Response from Gemini: "${cleanJsonText}"`);
+    console.log(`[DEBUG] generateLessonForModule - Response from Groq: "${cleanJsonText}"`);
     if (cleanJsonText.startsWith("```")) {
       cleanJsonText = cleanJsonText.replace(/^```(json)?/, "").replace(/```$/, "").trim();
     }
@@ -614,9 +687,9 @@ Select a relevant topic in software engineering (React patterns, Git workflows, 
 Make sure the lesson is highly engaging, clean, and contains a practical, fully formed code example.`;
 
   try {
-    const responseText = await generateWithGemini(systemPrompt, userPrompt, 3000, 0.7);
+    const responseText = await generateWithGroq(systemPrompt, userPrompt, 3000, 0.7);
 
-    // Clean up responseText if Gemini wraps it in markdown code blocks
+    // Clean up responseText if Groq wraps it in markdown code blocks
     let cleanJsonText = responseText.trim();
     if (cleanJsonText.startsWith("```")) {
       // Strip ```json or ``` if present
@@ -646,7 +719,7 @@ Make sure the lesson is highly engaging, clean, and contains a practical, fully 
 
     return lesson;
   } catch (error) {
-    console.error("Gemini generation failed:", error);
+    console.error("Groq generation failed:", error);
     throw error;
   }
 }
@@ -805,7 +878,7 @@ export const handler = async (event: any): Promise<any> => {
       return { status: "success", date: todayStr };
     } catch (error: any) {
       console.error("Daily cron job failed:", error);
-      return { status: "error", message: error.message };
+      return { status: "error", message: "Daily cron job failed" };
     }
   }
 
@@ -861,15 +934,15 @@ export const handler = async (event: any): Promise<any> => {
         console.log(`[DEBUG] Found predefined template for "${topic}": key "${templateKey}"`);
         modules = PREDEFINED_ROADMAPS[templateKey].modules;
       } else {
-        console.log(`[DEBUG] No predefined template for "${topic}". Invoking Gemini for custom roadmap.`);
-        // Generate roadmap modules using Gemini
+        console.log(`[DEBUG] No predefined template for "${topic}". Invoking Groq for custom roadmap.`);
+        // Generate roadmap modules using Groq
         const roadmapModules = await generateRoadmap(topic, difficulty, goal, studyTime);
         modules = roadmapModules.map((m: any) => m.title);
       }
       
-      const roadmap = modules.map((title: string, idx: number) => ({
+      const roadmap: RoadmapModule[] = modules.map((title: string, idx: number) => ({
         title,
-        status: idx === 0 ? "Current" : "Locked"
+        status: (idx === 0 ? "Current" : "Locked") as "Completed" | "Current" | "Locked"
       }));
 
       const profile: Profile = {
@@ -1066,6 +1139,9 @@ export const handler = async (event: any): Promise<any> => {
 
   } catch (error: any) {
     console.error("API handler failed:", error);
-    return apiResponse(500, { error: error.message || "Internal Server Error" });
+    const message = error?.message === "Failed to generate content. Please try again later."
+      ? error.message
+      : "Internal Server Error";
+    return apiResponse(500, { error: message });
   }
 };

@@ -11,6 +11,7 @@ Globals:
         TABLE_NAME: !Ref LessonsTable
         SES_EMAIL_SENDER: !Ref SESEmailSender
         SES_EMAIL_RECIPIENT: !Ref SESEmailRecipient
+        GROQ_API_KEY: !Ref GroqApiKey
 
 Parameters:
   SESEmailSender:
@@ -21,6 +22,11 @@ Parameters:
     Type: String
     Default: ""
     Description: Email address to send the daily lessons to (leave empty to disable email).
+  GroqApiKey:
+    Type: String
+    Default: ""
+    NoEcho: true
+    Description: API Key for Groq.
 
 Resources:
   # DynamoDB Table
