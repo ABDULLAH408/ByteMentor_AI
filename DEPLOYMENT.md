@@ -60,11 +60,10 @@ You can use the deployment helper scripts in `infra/` or run the commands manual
 Follow the interactive prompts:
 1. **Stack Name**: `bytementor-ai-backend`
 2. **AWS Region**: `us-east-1` (recommended region supporting Nova Lite model)
-3. **Parameter GeminiApiKey**: Paste your Google Gemini API key when prompted.
-4. **Parameter SESEmailSender**: Enter a verified SES email (leave empty to disable email)
-5. **Parameter SESEmailRecipient**: Enter your email (leave empty to disable email)
-6. Accept defaults for confirmation and IAM role creation.
-7. Allow SAM to deploy the resources.
+3. **Parameter SESEmailSender**: Enter a verified SES email (leave empty to disable email)
+4. **Parameter SESEmailRecipient**: Enter your email (leave empty to disable email)
+5. Accept defaults for confirmation and IAM role creation.
+6. Allow SAM to deploy the resources.
 
 Save the output URL: **`ByteMentorApiUrl`** (e.g. `https://xxxxxxxxxxxxxx.lambda-url.us-east-1.on.aws/`).
 
@@ -73,8 +72,7 @@ Save the output URL: **`ByteMentorApiUrl`** (e.g. `https://xxxxxxxxxxxxxx.lambda
 ## 4. How to Configure Gemini
 1. Create or sign in to a Google AI Studio account at [aistudio.google.com](https://aistudio.google.com/).
 2. Open **API Keys** and create a new API key.
-3. During `sam deploy --guided`, paste that key when SAM prompts for **GeminiApiKey**.
-4. The Lambda will receive it automatically as the `GEMINI_API_KEY` environment variable.
+4. After deployment, add that key to the Lambda function's environment as `GEMINI_API_KEY` in the AWS Console or via the AWS CLI.
 
 ---
 

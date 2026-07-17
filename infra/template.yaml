@@ -9,15 +9,10 @@ Globals:
     Environment:
       Variables:
         TABLE_NAME: !Ref LessonsTable
-        GEMINI_API_KEY: !Ref GeminiApiKey
         SES_EMAIL_SENDER: !Ref SESEmailSender
         SES_EMAIL_RECIPIENT: !Ref SESEmailRecipient
 
 Parameters:
-  GeminiApiKey:
-    Type: String
-    NoEcho: true
-    Description: Google Gemini API key for Gemini 2.5 Flash.
   SESEmailSender:
     Type: String
     Default: ""
